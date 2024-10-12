@@ -11,7 +11,7 @@ domain = st.text_input("Enter Domain (e.g., example.com):", "")
 keywords = st.text_area("Enter Keywords (one per line):")
 
 # API details for SerpApi
-SERP_API_KEY = "YOUR_SERPAPI_KEY"
+SERP_API_KEY = "2558b996729035d96163571675531344574c4d3a4cc2cf5ddab822a461884bba"
 SERP_API_URL = "https://serpapi.com/search.json"
 
 # Check if user has entered domain and keywords
