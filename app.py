@@ -11,7 +11,7 @@ domain = st.text_input("Enter Domain (e.g., example.com):", "")
 keywords = st.text_area("Enter Keywords (one per line):")
 
 # API details for SerpApi
-SERP_API_KEY = "746fb325f4e230733e1c703e96f42cb71955e0c8f2d04d67aa916cef74950ea6"
+SERP_API_KEY = ""
 SERP_API_URL = "https://serpapi.com/search.json"
 
 # Button to trigger the rank checking
