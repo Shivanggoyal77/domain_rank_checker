@@ -4,7 +4,7 @@ import requests
 
 # Set up the Streamlit app title and description
 st.title("Domain Keyword Ranking Checker")
-st.write("Find the rank of a webpage in a given domain for specified keywords.")
+st.write("Find the rank of any webpage within a given domain for specified keywords.")
 
 # Input fields for domain and keywords
 domain = st.text_input("Enter Domain (e.g., example.com):", "")
@@ -25,7 +25,6 @@ if domain and keywords:
         params = {
             "engine": "google",
             "q": keyword,
-            "domain": domain,
             "api_key": SERP_API_KEY
         }
         
@@ -34,18 +33,20 @@ if domain and keywords:
         if response.status_code == 200:
             data = response.json()
             
-            # Parse the data to find the ranking information
-            for result in data.get("organic_results", []):
-                rank = result.get("position")
-                url = result.get("link")
-                
-                if domain in url:
-                    results.append({
-                        "Keyword": keyword,
-                        "Rank": rank,
-                        "URL": url
-                    })
-                    break
+            # Parse the data to find ranking information for any page under the domain
+            domain_results = [
+                {
+                    "Keyword": keyword,
+                    "Rank": result.get("position"),
+                    "URL": result.get("link")
+                }
+                for result in data.get("organic_results", [])
+                if domain in result.get("link", "")
+            ]
+            
+            # Add to the results, or show 'Not Found' if none match the domain
+            if domain_results:
+                results.extend(domain_results)
             else:
                 results.append({
                     "Keyword": keyword,
@@ -56,9 +57,11 @@ if domain and keywords:
             st.error(f"Error fetching data for keyword: {keyword}")
     
     # Display the results in a table
-    df = pd.DataFrame(results)
-    st.write("Keyword Ranking Results:")
-    st.table(df)
+    if results:
+        df = pd.DataFrame(results)
+        st.write("Keyword Ranking Results:")
+        st.table(df)
+    else:
+        st.write("No results found for the given domain and keywords.")
 else:
     st.info("Please enter both a domain and keywords to proceed.")
-
