@@ -32,45 +32,52 @@ if st.button("Get Results"):
         
         # Loop through each keyword and find the ranking
         for keyword in keyword_list:
-            params = {
-                "key": API_KEY,
-                "cx": CX,
-                "q": keyword,
-                "num": 10  # Adjust the number of search results to retrieve, max is 10
-            }
-            
-            try:
-                # Make the request to Google Custom Search API
-                response = requests.get(GOOGLE_CSE_URL, params=params)
-                response.raise_for_status()
-                data = response.json()
+            found = False
+            for start in range(1, 101, 10):  # Increment by 10 for pagination up to 100 results
+                params = {
+                    "key": API_KEY,
+                    "cx": CX,
+                    "q": keyword,
+                    "num": 10,  # Number of results per request
+                    "start": start
+                }
                 
-                # Parse the data to find ranking information for any page under the domain
-                domain_results = [
-                    {
-                        "Keyword": keyword,
-                        "Rank": idx + 1,
-                        "URL": item.get("link")
-                    }
-                    for idx, item in enumerate(data.get("items", []))
-                    if domain in item.get("link", "")
-                ]
+                try:
+                    # Make the request to Google Custom Search API
+                    response = requests.get(GOOGLE_CSE_URL, params=params)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    # Parse the data to find ranking information for any page under the domain
+                    for idx, item in enumerate(data.get("items", [])):
+                        url = item.get("link")
+                        if domain in url:
+                            results.append({
+                                "Keyword": keyword,
+                                "Rank": start + idx,
+                                "URL": url
+                            })
+                            found = True
+                            break
+                    
+                    # Stop further requests if rank is found for this keyword
+                    if found:
+                        break
+                    
+                    # Delay to avoid hitting rate limits
+                    time.sleep(1)
                 
-                # Add to the results, or show 'Not Found' if none match the domain
-                if domain_results:
-                    results.extend(domain_results)
-                else:
-                    results.append({
-                        "Keyword": keyword,
-                        "Rank": "Not Found",
-                        "URL": ""
-                    })
-                
-                # Small delay to avoid hitting rate limits
-                time.sleep(1)
-            
-            except requests.exceptions.RequestException as e:
-                st.error(f"Error fetching data for keyword: {keyword} - {e}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error fetching data for keyword: {keyword} - {e}")
+                    break
+
+            # If no results for domain found within 100 results, mark as "Not Found"
+            if not found:
+                results.append({
+                    "Keyword": keyword,
+                    "Rank": "Not Found",
+                    "URL": ""
+                })
         
         # Display the results in a table
         if results:
@@ -81,3 +88,4 @@ if st.button("Get Results"):
             st.write("No results found for the given domain and keywords.")
     else:
         st.warning("Please enter both a domain and keywords to proceed.")
+
