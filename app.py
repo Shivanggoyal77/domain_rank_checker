@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import time
+from urllib.parse import urlparse
 
 # Set up the Streamlit app title and description
 st.title("Domain Keyword Ranking Checker")
@@ -15,6 +16,15 @@ keywords = st.text_area("Enter Keywords (one per line):")
 API_KEY = "AIzaSyDj2krchXWyXkWWmkCk1jqoWCEc_OPAVeQ"
 CX = "34c3745f38a364043"
 GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
+
+# Helper function to check if the URL belongs to the domain
+def is_url_in_domain(url, domain):
+    parsed_url = urlparse(url)
+    netloc = parsed_url.netloc
+    # Remove 'www.' if present
+    netloc = netloc.replace('www.', '')
+    # Compare domain with the normalized URL
+    return domain in netloc
 
 # Button to trigger the rank checking
 if st.button("Get Results"):
@@ -51,7 +61,7 @@ if st.button("Get Results"):
                     # Parse the data to find ranking information for any page under the domain
                     for idx, item in enumerate(data.get("items", [])):
                         url = item.get("link")
-                        if domain in url:
+                        if is_url_in_domain(url, domain):
                             results.append({
                                 "Keyword": keyword,
                                 "Rank": start + idx,
@@ -88,4 +98,3 @@ if st.button("Get Results"):
             st.write("No results found for the given domain and keywords.")
     else:
         st.warning("Please enter both a domain and keywords to proceed.")
-
