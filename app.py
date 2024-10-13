@@ -97,7 +97,12 @@ if st.button("Get Results"):
                     "URL": ""
                 })
         
-        # Display final results table
+     # Display final results table
         if results:
             df = pd.DataFrame(results)
-            st.write("
+            st.write("### Keyword Ranking Results")
+            st.table(df)
+        else:
+            st.write("No results found for the given domain and keywords.")
+    else:
+        st.warning("Please enter both a domain and keywords to proceed.")
