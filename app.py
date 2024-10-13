@@ -5,15 +5,16 @@ import time
 
 # Set up the Streamlit app title and description
 st.title("Domain Keyword Ranking Checker")
-st.write("Find the rank of any webpage within a given domain for specified keywords.")
+st.write("Find the rank of any webpage within a given domain for specified keywords using Google Custom Search API.")
 
 # Input fields for domain and keywords
 domain = st.text_input("Enter Domain (e.g., example.com):", "")
 keywords = st.text_area("Enter Keywords (one per line):")
 
-# API details for SerpApi
-SERP_API_KEY = "746fb325f4e230733e1c703e96f42cb71955e0c8f2d04d67aa916cef74950ea6"
-SERP_API_URL = "https://serpapi.com/search.json"
+# Google Custom Search API details
+API_KEY = "AIzaSyDj2krchXWyXkWWmkCk1jqoWCEc_OPAVeQ"
+CX = "34c3745f38a364043"
+GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
 
 # Button to trigger the rank checking
 if st.button("Get Results"):
@@ -32,14 +33,15 @@ if st.button("Get Results"):
         # Loop through each keyword and find the ranking
         for keyword in keyword_list:
             params = {
-                "engine": "google",
+                "key": API_KEY,
+                "cx": CX,
                 "q": keyword,
-                "api_key": SERP_API_KEY
+                "num": 10  # Adjust the number of search results to retrieve, max is 10
             }
             
             try:
-                # Make the request to SerpApi
-                response = requests.get(SERP_API_URL, params=params)
+                # Make the request to Google Custom Search API
+                response = requests.get(GOOGLE_CSE_URL, params=params)
                 response.raise_for_status()
                 data = response.json()
                 
@@ -47,11 +49,11 @@ if st.button("Get Results"):
                 domain_results = [
                     {
                         "Keyword": keyword,
-                        "Rank": result.get("position"),
-                        "URL": result.get("link")
+                        "Rank": idx + 1,
+                        "URL": item.get("link")
                     }
-                    for result in data.get("organic_results", [])
-                    if domain in result.get("link", "")
+                    for idx, item in enumerate(data.get("items", []))
+                    if domain in item.get("link", "")
                 ]
                 
                 # Add to the results, or show 'Not Found' if none match the domain
