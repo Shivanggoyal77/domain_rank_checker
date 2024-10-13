@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import time
 
 # Set up the Streamlit app title and description
 st.title("Domain Keyword Ranking Checker")
@@ -20,6 +21,12 @@ if st.button("Get Results"):
     if domain and keywords:
         keyword_list = [keyword.strip() for keyword in keywords.splitlines() if keyword.strip()]
         
+        # Limit the number of keywords per query to avoid rate limits (example: 10 keywords)
+        max_keywords = 10
+        if len(keyword_list) > max_keywords:
+            st.warning(f"Limiting to the first {max_keywords} keywords due to API constraints.")
+            keyword_list = keyword_list[:max_keywords]
+        
         results = []
         
         # Loop through each keyword and find the ranking
@@ -30,9 +37,10 @@ if st.button("Get Results"):
                 "api_key": SERP_API_KEY
             }
             
-            # Make the request to SerpApi
-            response = requests.get(SERP_API_URL, params=params)
-            if response.status_code == 200:
+            try:
+                # Make the request to SerpApi
+                response = requests.get(SERP_API_URL, params=params)
+                response.raise_for_status()
                 data = response.json()
                 
                 # Parse the data to find ranking information for any page under the domain
@@ -55,8 +63,12 @@ if st.button("Get Results"):
                         "Rank": "Not Found",
                         "URL": ""
                     })
-            else:
-                st.error(f"Error fetching data for keyword: {keyword}")
+                
+                # Small delay to avoid hitting rate limits
+                time.sleep(1)
+            
+            except requests.exceptions.RequestException as e:
+                st.error(f"Error fetching data for keyword: {keyword} - {e}")
         
         # Display the results in a table
         if results:
