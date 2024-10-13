@@ -21,18 +21,15 @@ GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
 def is_url_in_domain(url, domain):
     parsed_url = urlparse(url)
     netloc = parsed_url.netloc
-    # Remove 'www.' if present
-    netloc = netloc.replace('www.', '')
-    # Compare domain with the normalized URL
+    netloc = netloc.replace('www.', '')  # Remove 'www.' if present
     return domain in netloc
 
 # Button to trigger the rank checking
 if st.button("Get Results"):
-    # Check if user has entered domain and keywords
     if domain and keywords:
         keyword_list = [keyword.strip() for keyword in keywords.splitlines() if keyword.strip()]
         
-        # Limit the number of keywords per query to avoid rate limits (example: 10 keywords)
+        # Limit the number of keywords per query to avoid rate limits
         max_keywords = 10
         if len(keyword_list) > max_keywords:
             st.warning(f"Limiting to the first {max_keywords} keywords due to API constraints.")
@@ -43,25 +40,37 @@ if st.button("Get Results"):
         # Loop through each keyword and find the ranking
         for keyword in keyword_list:
             found = False
-            for start in range(1, 101, 10):  # Increment by 10 for pagination up to 100 results
+            st.write(f"### Searching for keyword: {keyword}")
+            for start in range(1, 101, 10):
+                st.write(f"Requesting results {start} to {start + 9}...")
+
                 params = {
                     "key": API_KEY,
                     "cx": CX,
                     "q": keyword,
-                    "num": 10,  # Number of results per request
+                    "num": 10,  
                     "start": start
                 }
                 
                 try:
-                    # Make the request to Google Custom Search API
                     response = requests.get(GOOGLE_CSE_URL, params=params)
                     response.raise_for_status()
                     data = response.json()
                     
-                    # Parse the data to find ranking information for any page under the domain
+                    # Debugging: Show raw data for each query
+                    st.write("**Raw API Response:**")
+                    st.json(data)
+                    
+                    # Parse and check each result for domain match
                     for idx, item in enumerate(data.get("items", [])):
                         url = item.get("link")
+                        title = item.get("title", "No title")
+                        
+                        # Debugging: Display each URL and title retrieved
+                        st.write(f"Result {start + idx}: Title - {title}, URL - {url}")
+
                         if is_url_in_domain(url, domain):
+                            st.write(f"**Domain match found at rank {start + idx}:** {url}")
                             results.append({
                                 "Keyword": keyword,
                                 "Rank": start + idx,
@@ -70,7 +79,6 @@ if st.button("Get Results"):
                             found = True
                             break
                     
-                    # Stop further requests if rank is found for this keyword
                     if found:
                         break
                     
@@ -80,21 +88,16 @@ if st.button("Get Results"):
                 except requests.exceptions.RequestException as e:
                     st.error(f"Error fetching data for keyword: {keyword} - {e}")
                     break
-
-            # If no results for domain found within 100 results, mark as "Not Found"
+            
             if not found:
+                st.write(f"No match found for '{keyword}' within the first 100 results.")
                 results.append({
                     "Keyword": keyword,
                     "Rank": "Not Found",
                     "URL": ""
                 })
         
-        # Display the results in a table
+        # Display final results table
         if results:
             df = pd.DataFrame(results)
-            st.write("Keyword Ranking Results:")
-            st.table(df)
-        else:
-            st.write("No results found for the given domain and keywords.")
-    else:
-        st.warning("Please enter both a domain and keywords to proceed.")
+            st.write("
