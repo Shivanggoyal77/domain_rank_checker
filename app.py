@@ -13,8 +13,7 @@ domain = st.text_input("Enter Domain (e.g., example.com):", "")
 keywords = st.text_area("Enter Keywords (one per line):")
 
 # Google Custom Search API details
-API_KEY = "AIzaSyDj2krchXWyXkWWmkCk1jqoWCEc_OPAVeQ"
-CX = "34c3745f38a364043"
+
 GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
 
 # Helper function to check if the URL belongs to the domain
